@@ -57,3 +57,21 @@ SELECT area, week, ANY_VALUE(coupon_on) AS coupon_on, COUNT(*) AS new_customers,
        SUM(CAST(used_coupon AS INT)) AS coupon_users, AVG(CAST(reordered_8w AS DOUBLE)) AS reorder_8w
 FROM read_csv_auto('data/raw/first_order_coupon_test.csv')
 GROUP BY area, week ORDER BY area, week;
+
+-- 6. Customer-level 4-week reorder rate from the order log (reorder-coupon test window, weeks 27-38).
+--    For each order, LEAD finds the same customer's next order; only orders with 4 weeks of follow-up count.
+CREATE OR REPLACE TABLE mart_repeat_4w AS
+WITH o AS (
+    SELECT customer_id, week, segment, treated
+    FROM read_parquet('data/raw/reorder_coupon_test.parquet')
+    WHERE ordered
+), n AS (
+    SELECT *, LEAD(week) OVER (PARTITION BY customer_id ORDER BY week) AS next_week
+    FROM o
+)
+SELECT segment, treated, COUNT(*) AS base_orders,
+       AVG(CASE WHEN next_week IS NOT NULL AND next_week - week <= 4 THEN 1.0 ELSE 0.0 END) AS repeat_4w
+FROM n
+WHERE week <= 34
+GROUP BY ROLLUP (segment, treated)
+ORDER BY segment, treated;

@@ -5,10 +5,12 @@
 2 Coupons           reorder-coupon holdout (activation) + first-order coupon switchback (acquisition)
 3 Discount response platform-randomised campaign cells -> category elasticities -> budget reallocation
 4 Cost sharing      pilot DiD (area W, growth tier, week 30+) -> sharing rule by tier
-5 Forecast          bottom-up quarterly forecast, Q4 backtest vs naive, 2026 Q1 plan scenarios
+5 Forecast          bottom-up quarterly forecast, Q4 backtest vs naive
+6 Impact            the recommendations together, replayed on Q4 2025, with the value-per-order sensitivity
 """
 from __future__ import annotations
 
+import itertools
 import json
 from pathlib import Path
 
@@ -20,7 +22,8 @@ from scipy import stats
 ROOT = Path(__file__).resolve().parents[1]
 MARTS, OUT = ROOT / "data" / "marts", ROOT / "outputs"
 TAKE = 0.10
-CAMPAIGN_WEEKS = [6, 7, 18, 19, 31, 32, 44, 45]
+CAMPAIGN_WEEKS = sorted(pd.read_csv(ROOT / "data" / "raw" / "platform_campaigns.csv").week.unique().tolist())
+SENS_VALUES = [3000, 4500, 6000, 7500]
 VALUE_PER_INCR_ORDER = 4500   # assumption: commission on an order (~1,700 won) + value of the reorders it starts
 
 
@@ -137,14 +140,39 @@ def ch2():
     reorders_on = (on.reorder_8w * on.new_customers).sum()
     marginal_rate = (reorders_on - rate_off * organic_on) / (extra * len(on))
     users_on = on.coupon_users.sum()
+    # randomisation inference: every schedule with 2 of 4 two-week blocks on in each area (6^3 = 216)
+    f["block"] = (f.week - 40) // 2
+    combos = list(itertools.combinations(range(4), 2))
+    areas = sorted(f.area.unique())
+    perm = []
+    for ca in itertools.product(combos, repeat=len(areas)):
+        if len(set(ca)) == 1:
+            continue                                   # same schedule everywhere = collinear with week effects
+        on_map = {(a, blk): int(blk in c) for a, c in zip(areas, ca) for blk in range(4)}
+        g = f.assign(coupon_on=[on_map[(a, bl)] for a, bl in zip(f.area, f.block)])
+        perm.append(smf.ols("new_customers ~ coupon_on + C(area) + C(week)", g).fit().params["coupon_on"])
+    perm = np.array(perm)
+    p_perm = float((np.abs(perm) >= abs(extra) - 1e-9).mean())
     acq = {"extra_per_area_week": float(extra), "ci": fit.conf_int().loc["coupon_on"].tolist(),
            "base_per_area_week": float(off.new_customers.mean()), "lift": float(extra / off.new_customers.mean()),
            "reorder_organic": float(rate_off), "reorder_marginal": float(marginal_rate),
            "coupon_users_share_on": float(users_on / on.new_customers.sum()),
            "cost_per_incr_new": float(5000 * users_on / (extra * len(on))),
-           "cost_per_incr_retained": float(5000 * users_on / (extra * len(on) * marginal_rate))}
+           "cost_per_incr_retained": float(5000 * users_on / (extra * len(on) * marginal_rate)),
+           "n_obs": int(len(f)), "p_permutation": p_perm, "n_permutations": int(len(perm))}
+    rep4 = load("mart_repeat_4w")
+    repeat = [{"segment": (r.segment if isinstance(r.segment, str) else "전체"),
+               "arm": ("전체" if pd.isna(r.treated) else ("쿠폰" if r.treated else "홀드아웃")),
+               "base_orders": int(r.base_orders), "repeat_4w": float(r.repeat_4w)} for r in rep4.itertuples()]
+    breakpoints = {r.segment: float(r.cost_per_incr) for r in seg_rows.dropna(subset=["cost_per_incr"]).itertuples()}
+    sens = []
+    for v in SENS_VALUES:
+        k = seg_rows[seg_rows.cost_per_incr.notna() & (seg_rows.cost_per_incr <= v)]
+        sens.append({"value": v, "segments": k.segment.tolist(), "cost_cut": float(1 - k.cost.sum() / targeted["cost_all"]),
+                     "incr_kept": float(k.incremental.sum() / targeted["incr_all"])})
     dump("ch2_coupons.json", {"reorder": rows, "value_per_incr_order": VALUE_PER_INCR_ORDER, "targeted": targeted,
-                              "first_order": acq, "area_weeks": f.to_dict("records")})
+                              "first_order": acq, "repeat_4w": repeat, "sensitivity": sens, "breakpoints": breakpoints,
+                              "area_weeks": f.drop(columns="block").to_dict("records")})
 
 
 # ---------------------------------------------------------------- 3 Discount response by category
@@ -178,13 +206,28 @@ def ch3(mw):
     spend = camp.groupby("category").platform_disc_won.sum()
     base_orders = camp.groupby("category").orders.sum()
     top, bottom = r.category.iloc[:2].tolist(), r.category.iloc[-3:].tolist()
-    moved = spend[bottom].sum() * 0.5
-    eff = r.set_index("category").orders_per_1m_won / 1e6
-    delta = -sum(spend[c] * 0.5 * eff[c] for c in bottom) + sum(moved * spend[c] / spend[top].sum() * eff[c] for c in top)
+    rr = r.set_index("category")
+    cells = camp[camp.category.isin(top)]
+    rate_before = float(cells.platform_disc_won.sum() / cells.gmv_won.sum())
+    cap = spend[top].sum() * (0.10 / rate_before - 1)           # keep the receiving categories' average rate within 0-10%
+    wanted = spend[bottom].sum() * 0.5
+    moved = min(wanted, cap)
+    rate_after = rate_before * (1 + moved / spend[top].sum())
+    mid = (rate_before + rate_after) / 2
+
+    def eff(c, d):
+        return rr.b[c] / (rr.aov[c] * (1 + rr.b[c] * d))
+
+    give = moved / spend[bottom].sum()
+    delta = (-sum(spend[c] * give * eff(c, rr.disc_rate_now[c]) for c in bottom)
+             + sum(moved * spend[c] / spend[top].sum() * eff(c, mid) for c in top))
     dump("ch3_elasticity.json", {"categories": r.to_dict("records"), "top": top, "bottom": bottom,
                                  "realloc": {"spend_moved": float(moved), "spend_total": float(spend.sum()),
                                              "orders_delta": float(delta), "orders_base": float(base_orders.sum()),
-                                             "rel": float(delta / base_orders.sum())}})
+                                             "rel": float(delta / base_orders.sum()), "rate_top_before": rate_before,
+                                             "rate_top_after": float(rate_after), "tested_max": 0.10, "wanted": float(wanted),
+                                             "share_of_bottom_moved": float(give),
+                                             "within_range": bool(rate_after <= 0.10)}})
     return r
 
 
@@ -224,7 +267,8 @@ def ch4(mw, h):
     dump("ch4_pilot.json", {"n_merchants": int(d.merchant_id.nunique()), "n_treated": int(d[d.treat == 1].merchant_id.nunique()),
                             "did": out, "event_study": es, "platform_cost": float(cost), "extra_orders": float(extra_orders),
                             "cost_per_extra_order": float(cost / extra_orders) if extra_orders > 0 else None,
-                            "extra_gmv": float(extra_orders * post.aov_won.mean())})
+                            "extra_gmv": float(extra_orders * post.aov_won.mean()),
+                            "pays_back": {str(v): bool(cost / extra_orders <= v) for v in SENS_VALUES} if extra_orders > 0 else {}})
 
 
 # ---------------------------------------------------------------- 5 Forecast
@@ -291,6 +335,40 @@ def ch5(mw, elas):
         "year_end_miss": float((weekly.bottom_up / weekly.actual - 1)[weekly.week >= 51].mean())})
 
 
+# ---------------------------------------------------------------- 6 Impact of the recommendations together
+def ch6(mw):
+    """What the two measured recommendations are worth per quarter at platform scale, valuing every
+    incremental order at VALUE_PER_INCR_ORDER (and re-running the rule for other values):
+    (a) roll the reorder coupon out only to segments whose cost per incremental order is within the value,
+        compared with rolling it out to every customer the way it was tested;
+    (b) move campaign budget toward the categories with the largest response, within the tested range.
+    Delivery-time work and the 30% matching cell are upside / to test and are not added in."""
+    c2 = json.loads((OUT / "ch2_coupons.json").read_text(encoding="utf-8"))
+    c3 = json.loads((OUT / "ch3_elasticity.json").read_text(encoding="utf-8"))
+    q4 = mw[mw.week >= 40]
+    q_orders, q_gmv = float(q4.orders.sum()), float(q4.gmv_won.sum())
+    cust = load("mart_reorder_customer")
+    scale = q_orders / (cust.orders.sum() * 13 / 12)          # test customers' share of platform orders, quarter-adjusted
+    t = c2["targeted"]
+    full_cost = t["cost_all"] * 13 / 12 * scale
+    full_incr = t["incr_all"] * 13 / 12 * scale
+    ra = c3["realloc"]
+    out = []
+    for v in SENS_VALUES:
+        k = [x for x in c2["sensitivity"] if x["value"] == v][0]
+        saved, lost = full_cost * k["cost_cut"], full_incr * (1 - k["incr_kept"])
+        out.append({"value": v, "segments": k["segments"],
+                    "rows": [{"lever": "재주문 쿠폰: 전 고객 확대 대신 대상 한정", "orders": -lost, "coupon_cost": -saved, "value_won": saved - lost * v},
+                             {"lever": "캠페인 예산 카테고리 재배분(실험 범위 안)", "orders": ra["orders_delta"], "coupon_cost": 0.0,
+                              "value_won": ra["orders_delta"] * v}]})
+        out[-1]["total_value"] = sum(r["value_won"] for r in out[-1]["rows"])
+        out[-1]["total_orders"] = sum(r["orders"] for r in out[-1]["rows"])
+    base = [x for x in out if x["value"] == VALUE_PER_INCR_ORDER][0]
+    dump("ch6_impact.json", {"q4": {"orders": q_orders, "gmv": q_gmv, "net": float(q4.platform_net_won.sum())}, "scale": float(scale),
+                             "full_rollout": {"coupon_cost": full_cost, "incremental": full_incr, "cost_per_incr": full_cost / full_incr},
+                             "base": base, "sensitivity": out, "per_campaign": True})
+
+
 def main():
     mw, kpi, h1 = load("mart_merchant_week"), load("mart_kpi_week"), load("mart_merchant_h1")
     ch0(mw, kpi)
@@ -299,6 +377,7 @@ def main():
     elas = ch3(mw)
     ch4(mw, h)
     ch5(mw, elas)
+    ch6(mw)
     print("outputs written:", sorted(p.name for p in OUT.glob("*.json")))
 
 

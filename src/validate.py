@@ -49,6 +49,21 @@ def main():
         tw[tw.merchant_id.isin(g) & tw.week.between(14, 29)].pipe(lambda y: y.lam.sum() / y.lam_no_discount.sum())))
     did = c4["did"]["lo"]
     add("비용 분담 시범: 주문 효과(DiD)", did["est"], true_lo, did["ci"][0] - 0.03 <= true_lo <= did["ci"][1] + 0.03, "95% 구간 ±3%p")
+    add("첫 주문 쿠폰: 무작위화 추론(210개 일정) p < 0.05", fo["p_permutation"], 0.05, fo["p_permutation"] < 0.05, "관측 24개라 표준오차 대신 순열 검정")
+    ra = c3["realloc"]
+    add("캠페인 재배분이 실험 범위(평균 10%) 안", ra["rate_top_after"], ra["tested_max"], ra["within_range"])
+    cats = {r["category"]: r for r in c3["categories"]}
+    mw = pd.read_parquet(ROOT / "data" / "marts" / "mart_merchant_week.parquet")
+    spend = mw[mw.week.isin([44, 45])].groupby("category").platform_disc_won.sum()
+    mid = (ra["rate_top_before"] + ra["rate_top_after"]) / 2
+
+    def eff(c, b, d):
+        return b / (cats[c]["aov"] * (1 + b * d))
+
+    give = ra["share_of_bottom_moved"]
+    true_delta = (-sum(spend[c] * give * eff(c, true_b[c], cats[c]["disc_rate_now"]) for c in c3["bottom"])
+                  + sum(ra["spend_moved"] * spend[c] / spend[c3["top"]].sum() * eff(c, true_b[c], mid) for c in c3["top"]))
+    add("캠페인 재배분 증분 주문(참값 반응으로 재계산)", ra["orders_delta"], float(true_delta), abs(ra["orders_delta"] / true_delta - 1) <= 0.30, "±30%")
     add("예측: 행사 주 오차가 단순 평균보다 작음", c5["mape_event_bu"], c5["mape_event_naive"], c5["mape_event_bu"] < c5["mape_event_naive"])
     add("예측: 연말 급증은 놓침(함정 5, 예상된 실패)", c5["year_end_miss"], -0.18, c5["year_end_miss"] < -0.10, "모델에 없는 패턴")
     out = {"checks": checks, "passed": sum(c["pass"] for c in checks), "total": len(checks)}

@@ -5,7 +5,7 @@ from pathlib import Path
 import duckdb
 
 ROOT = Path(__file__).resolve().parents[1]
-MARTS = ["mart_merchant_week", "mart_kpi_week", "mart_merchant_h1", "mart_reorder_customer", "mart_first_order"]
+MARTS = ["mart_merchant_week", "mart_kpi_week", "mart_merchant_h1", "mart_reorder_customer", "mart_first_order", "mart_repeat_4w"]
 
 
 def main():

@@ -82,5 +82,11 @@
  "platform_cost": 57550610.0,
  "extra_orders": 9774.188164902509,
  "cost_per_extra_order": 5888.019447656503,
- "extra_gmv": 172777572.3303536
+ "extra_gmv": 172777572.3303536,
+ "pays_back": {
+  "3000": false,
+  "4500": false,
+  "6000": true,
+  "7500": true
+ }
 }

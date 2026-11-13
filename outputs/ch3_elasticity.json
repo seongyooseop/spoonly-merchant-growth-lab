@@ -102,10 +102,16 @@
   "일식"
  ],
  "realloc": {
-  "spend_moved": 106428910.0,
+  "spend_moved": 58557740.00000001,
   "spend_total": 372185720.0,
-  "orders_delta": 23702.083477733373,
+  "orders_delta": 12315.676705199921,
   "orders_base": 393477.0,
-  "rel": 0.06023753225152518
+  "rel": 0.03129961015561245,
+  "rate_top_before": 0.054468484965117206,
+  "rate_top_after": 0.1,
+  "tested_max": 0.1,
+  "wanted": 106428910.0,
+  "share_of_bottom_moved": 0.27510260135145614,
+  "within_range": true
  }
 }

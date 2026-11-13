@@ -124,7 +124,128 @@
   "reorder_marginal": 0.2248269993997168,
   "coupon_users_share_on": 0.5507318489032632,
   "cost_per_incr_new": 11687.78599084834,
-  "cost_per_incr_retained": 51985.686870591504
+  "cost_per_incr_retained": 51985.686870591504,
+  "n_obs": 24,
+  "p_permutation": 0.02857142857142857,
+  "n_permutations": 210
+ },
+ "repeat_4w": [
+  {
+   "segment": "월 1회 이하",
+   "arm": "홀드아웃",
+   "base_orders": 2580,
+   "repeat_4w": 0.27635658914728684
+  },
+  {
+   "segment": "월 1회 이하",
+   "arm": "쿠폰",
+   "base_orders": 20920,
+   "repeat_4w": 0.3091300191204589
+  },
+  {
+   "segment": "월 1회 이하",
+   "arm": "전체",
+   "base_orders": 23500,
+   "repeat_4w": 0.30553191489361703
+  },
+  {
+   "segment": "월 2~3회",
+   "arm": "홀드아웃",
+   "base_orders": 8302,
+   "repeat_4w": 0.6752589737412672
+  },
+  {
+   "segment": "월 2~3회",
+   "arm": "쿠폰",
+   "base_orders": 50889,
+   "repeat_4w": 0.6802255890270982
+  },
+  {
+   "segment": "월 2~3회",
+   "arm": "전체",
+   "base_orders": 59191,
+   "repeat_4w": 0.6795289824466557
+  },
+  {
+   "segment": "주 1회 이상",
+   "arm": "홀드아웃",
+   "base_orders": 11133,
+   "repeat_4w": 0.9689212251863828
+  },
+  {
+   "segment": "주 1회 이상",
+   "arm": "쿠폰",
+   "base_orders": 63148,
+   "repeat_4w": 0.9707354152150504
+  },
+  {
+   "segment": "주 1회 이상",
+   "arm": "전체",
+   "base_orders": 74281,
+   "repeat_4w": 0.9704635101843001
+  },
+  {
+   "segment": "휴면(60일+)",
+   "arm": "홀드아웃",
+   "base_orders": 340,
+   "repeat_4w": 0.08235294117647059
+  },
+  {
+   "segment": "휴면(60일+)",
+   "arm": "쿠폰",
+   "base_orders": 6486,
+   "repeat_4w": 0.12195497995683009
+  },
+  {
+   "segment": "휴면(60일+)",
+   "arm": "전체",
+   "base_orders": 6826,
+   "repeat_4w": 0.11998242015821857
+  },
+  {
+   "segment": "전체",
+   "arm": "전체",
+   "base_orders": 163798,
+   "repeat_4w": 0.734490042613463
+  }
+ ],
+ "sensitivity": [
+  {
+   "value": 3000,
+   "segments": [],
+   "cost_cut": 1.0,
+   "incr_kept": 0.0
+  },
+  {
+   "value": 4500,
+   "segments": [
+    "휴면(60일+)"
+   ],
+   "cost_cut": 0.8797488756197522,
+   "incr_kept": 0.31407097098363085
+  },
+  {
+   "value": 6000,
+   "segments": [
+    "휴면(60일+)"
+   ],
+   "cost_cut": 0.8797488756197522,
+   "incr_kept": 0.31407097098363085
+  },
+  {
+   "value": 7500,
+   "segments": [
+    "월 1회 이하",
+    "휴면(60일+)"
+   ],
+   "cost_cut": 0.5661810981319171,
+   "incr_kept": 0.7931437215007379
+  }
+ ],
+ "breakpoints": {
+  "월 1회 이하": 6069.019335062394,
+  "월 2~3회": 18765.82252957284,
+  "휴면(60일+)": 3550.1762226631217
  },
  "area_weeks": [
   {
