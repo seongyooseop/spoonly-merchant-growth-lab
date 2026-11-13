@@ -167,13 +167,23 @@ def page(c0, c1, c2, c3, c4, c5, c6, val):
         f"<b>비용 분담 매칭은 비율을 낮춰 다시 시험한 뒤 넓힌다.</b> 서울 서부 성장 등급 매장에서 할인 참여 {did['disc_on']['est'] * 100:+.1f}%p, 주문 {pc(did['lo']['est'], 1, True)}였지만 늘어난 주문 1건당 플랫폼 비용이 {c4['cost_per_extra_order']:,.0f}원이다. 증분 주문 가치가 6,000원 이상일 때만 지금 비율로 남는다.",
         f"<b>쿠폰보다 큰 기회는 배달 시간이다.</b> 배달 36분 초과 매장 {op['slow_n']:,}곳을 32분으로 줄이면 하반기 GMV 기준 약 {won(op['gain_delivery_h2'])}에 해당하는 주문이 늘어난다(1분당 주문 {pc(lv['delivery_per_min'], 1)}). 운영 지원 비용이 확인되지 않아 아래 합계에는 넣지 않았다.",
     ]
+    vt = base["vs_today"]
+    baseline_rows = (f"<tr><td>현재(재주문 쿠폰은 시험만) 대비</td><td class='n'>{vt['orders']:+,.0f}</td><td class='n'>+{won(vt['coupon_cost'])}</td><td class='n'>{won(vt['value_won'])}</td></tr>"
+                     f"<tr><td>전 고객 확대안 대비</td><td class='n'>{base['total_orders']:+,.0f}</td><td class='n'>{won(sum(r['coupon_cost'] for r in base['rows']))}</td><td class='n'>{won(base['total_value'])}</td></tr>")
+    rc = c6["recovery"]
+    rec_rows = "".join(f"<tr><td>{o['lever']}</td><td class='n'>{o['cost_per_order']:,.0f}원</td><td class='n'>{o['orders']:,.0f}</td>"
+                       f"<td class='n'>{o['used_orders']:,.0f}</td><td class='n'>{won(o['cum_cost']) if o['cum_cost'] else '—'}</td><td>{o['note']}</td></tr>" for o in rc["options"])
+    t5 = c5["tier_error_w40_50"]
+    outlook_rows = "".join(f"<tr><td>{o['tier']}</td><td class='n'>{pc(t5[o['tier']], 1, True) if o['tier'] in t5 else '—'}</td>"
+                           f"<td class='n'>{o['q4_regular_weekly']:,.0f}</td><td class='n'>{o['q1_weekly']:,.0f}</td><td class='n'>{pc(o['change'], 1, True)}</td></tr>" for o in c5["outlook_q1"])
     impact_rows = "".join(f"<tr><td>{r['lever']}</td><td class='n'>{r['orders']:+,.0f}</td><td class='n'>{won(r['coupon_cost']) if r['coupon_cost'] else '0'}</td>"
                           f"<td class='n'>{won(r['value_won'])}</td></tr>" for r in base["rows"])
     impact_rows += (f"<tr><td><b>합계</b></td><td class='n'><b>{base['total_orders']:+,.0f}</b></td><td class='n'><b>{won(sum(r['coupon_cost'] for r in base['rows']))}</b></td>"
                     f"<td class='n'><b>{won(base['total_value'])}</b></td></tr>")
     seg_label = {(): "보내지 않음", ("휴면(60일+)",): "휴면", ("휴면(60일+)", "월 1회 이하"): "휴면 + 월 1회 이하"}
     sens_rows = "".join(f"<tr><td class='n'>{x['value']:,}원</td><td>{seg_label.get(tuple(sorted(x['segments'], key=lambda z: z != '휴면(60일+)')), ', '.join(x['segments']))}</td>"
-                        f"<td>{'남음' if c4['pays_back'].get(str(x['value'])) else '안 남음'}</td><td class='n'>{won(x['total_value'])}</td></tr>" for x in c6["sensitivity"])
+                        f"<td>{'남음' if c4['pays_back'].get(str(x['value'])) else '안 남음'}</td><td class='n'>{x['vs_today']['orders']:+,.0f}</td>"
+                        f"<td class='n'>{won(x['vs_today']['value_won'])}</td><td class='n'>{won(x['total_value'])}</td></tr>" for x in c6["sensitivity"])
     rep_rows = "".join(f"<tr><td>{r['segment']}</td><td class='n'>{pc(next(q['repeat_4w'] for q in c2['repeat_4w'] if q['segment'] == r['segment'] and q['arm'] == '홀드아웃'), 1)}</td>"
                        f"<td class='n'>{pc(next(q['repeat_4w'] for q in c2['repeat_4w'] if q['segment'] == r['segment'] and q['arm'] == '쿠폰'), 1)}</td></tr>"
                        for r in [{"segment": x} for x in ["주 1회 이상", "월 2~3회", "월 1회 이하", "휴면(60일+)"]])
@@ -188,13 +198,15 @@ KPI 정의 → 매장 세분화 → 쿠폰 증분 실험 → 카테고리별 할
 
 <section class="memo"><div class="eyebrow">경영진 메모 · 2026 상반기 매장 성장 계획</div>
 <h2>쿠폰은 '쓰인 건수'가 아니라 '늘어난 주문'으로 배분하고, 매장 등급마다 분담 기준을 달리한다</h2>
-<p><b>측정된 두 권고(1·2번)를 합치면 분기당 쿠폰비 {won(-sum(r['coupon_cost'] for r in base['rows']))}을 줄이고, 증분 주문 가치 기준 {won(base['total_value'])}의 효과가 있습니다</b>
-(전 고객 확대안 대비, 증분 주문 1건 = 4,500원 가정). 이 가치를 3,000~7,500원 어느 값으로 잡아도 효과는 {won(sens_lo)}~{won(sens_hi)}으로 양수이고, 달라지는 것은 쿠폰 대상 범위입니다.</p>
+<p><b>측정된 두 권고(1·2번)는 지금보다 분기 주문을 {vt['orders']:+,.0f}건 늘리고, 재주문 쿠폰을 시험 방식 그대로 전 고객에 넓히는 안보다 쿠폰비를 {won(-sum(r['coupon_cost'] for r in base['rows']))} 줄입니다.</b>
+증분 주문 1건을 4,500원으로 치면 전 고객 확대안보다 분기 {won(base['total_value'])}의 가치가 있고, 이 가치를 3,000~7,500원 어느 값으로 잡아도 {won(sens_lo)}~{won(sens_hi)}으로 양수입니다. 달라지는 것은 쿠폰을 받을 고객 범위입니다.</p>
 <ol>{''.join(f'<li>{m}</li>' for m in memo)}</ol>
-<div class="two"><div><h3>분기 효과 (증분 주문 1건 = 4,500원)</h3>
-<div class="tbl"><table><thead><tr><th>권고</th><th>주문</th><th>쿠폰비</th><th>가치</th></tr></thead><tbody>{impact_rows}</tbody></table></div></div>
-<div><h3>가정을 바꾸면</h3>
-<div class="tbl"><table><thead><tr><th>증분 주문 가치</th><th>재주문 쿠폰 대상</th><th>50% 매칭</th><th>분기 효과</th></tr></thead><tbody>{sens_rows}</tbody></table></div></div></div>
+<h3>무엇과 비교하느냐에 따라 (분기, 증분 주문 1건 = 4,500원)</h3>
+<div class="tbl"><table><thead><tr><th>비교 기준</th><th>주문</th><th>쿠폰비</th><th>가치</th></tr></thead><tbody>{baseline_rows}</tbody></table></div>
+<p class="note">전 고객 확대안 대비로 주문이 줄어 보이는 것은 '증분 주문당 9,272원을 쓰는 확대'를 하지 않기 때문입니다. 지금 상태와 비교하면 주문은 늘어납니다. 주문 목표 때문에 확대안 수준의 주문이 필요하다면 6장의 비용표를 보십시오.</p>
+<h3>가정을 바꾸면</h3>
+<div class="tbl"><table><thead><tr><th>증분 주문 가치</th><th>재주문 쿠폰 대상</th><th>50% 매칭</th><th>현재 대비 주문</th><th>현재 대비 가치</th><th>전 고객 확대안 대비 가치</th></tr></thead><tbody>{sens_rows}</tbody></table></div>
+<p class="note">가치를 낮게 잡을수록 쿠폰 대상을 더 좁히게 되고(3,000원이면 아무에게도 보내지 않음), 줄어드는 주문의 가치도 작게 쳐서 확대안 대비 가치가 커 보입니다. 가치를 높게 잡으면 대상이 넓어져 주문은 늘지만 쿠폰비도 늘어납니다.</p>
 <p class="note">증분 주문 1건의 가치 = 수수료(약 1,700원) + 그 주문이 만드는 이후 재주문의 가치. 재주문 쿠폰 효과는 실험 고객 9만 명의 주문 비중으로 플랫폼 전체에 비례 확대했고(약 {c6['scale']:.1f}배), 캠페인 재배분은 분기 1회 캠페인 기준입니다.</p></section>
 
 <section><h2>0. KPI 트리: 무엇이 GMV와 플랫폼 수익을 움직이나</h2>
@@ -248,7 +260,16 @@ KPI 정의 → 매장 세분화 → 쿠폰 증분 실험 → 카테고리별 할
 <p>매장별로 할인을 걷어낸 수요의 추세를 잡고, 명절 효과와 이미 정해진 캠페인 일정 × 카테고리 반응을 더해 주 단위로 합산했습니다. 추세 기간은 Q3 백테스트에서 고른 {c5['window']}주를 Q4에 그대로 적용했습니다(시험 기간을 보고 고르지 않음).</p>
 <p>평소 주 오차는 {pc(c5['mape_normal_bu'], 1)}(직전 13주 평균 {pc(c5['mape_normal_naive'], 1)})로 비슷하지만, 추석·캠페인 주 오차는 {pc(c5['mape_event_bu'], 1)}로 단순 평균({pc(c5['mape_event_naive'], 1)})보다 훨씬 작습니다. 40~50주 합계 오차는 {pc(c5['q4_error_w40_50'], 1, True)}.
 연말 급증은 학습 기간에 없던 패턴이라 {pc(c5['year_end_miss'], 0)} 놓쳤습니다(함정 5). 작년 데이터가 쌓이면 연간 계절성을 넣어야 합니다.</p>
-</div><div><img src="img/ch5_forecast.png" alt="Q4 주간 주문 실제와 예측"></div></div></section>
+</div><div><img src="img/ch5_forecast.png" alt="Q4 주간 주문 실제와 예측"></div></div>
+<h3>매장 등급별: Q4 예측 오차와 다음 분기 기저 전망</h3>
+<div class="tbl"><table><thead><tr><th>등급</th><th>Q4 예측 오차(40~50주)</th><th>Q4 평소 주 주문</th><th>2026 Q1 주 주문(기저)</th><th>변화</th></tr></thead><tbody>{outlook_rows}</tbody></table></div>
+<p class="note">기저 전망 = 38~50주 추세(연말 급증을 성장으로 읽지 않도록 51~52주 제외) + 설 효과, 캠페인 없음, 현재 매장 할인 유지. 설 주를 뺀 12주 평균을 Q4 평소 주(추석·캠페인·연말 제외 8주)와 비교했습니다. 신규 매장은 상반기 이후 입점해 등급이 없습니다. 권고안(캠페인 재배분·쿠폰 대상)은 이 기저 위에 더해집니다.</p></section>
+
+<section><h2>6. 주문 목표가 있다면: 가장 싼 순서와 비용</h2>
+<p>전 고객 확대안 수준의 주문(분기 {rc['gap']:,.0f}건 차이)이 꼭 필요하다면, 실험으로 잰 수단을 증분 주문당 비용이 싼 순서로 쓰는 것이 가장 저렴합니다. 이 순서로 메우면 {won(rc['cost'])}이 들고, 증분 주문 1건을 4,500원으로 치면 가치는 {won(rc['value_won'])}입니다.
+어느 수단도 증분 주문당 4,500원보다 비싸므로, 가치 기준으로는 권하지 않습니다. 주문이 목표라면 쿠폰보다 배달 시간 개선(1장)을 먼저 검토하는 편이 낫습니다.</p>
+<div class="tbl"><table><thead><tr><th>수단</th><th>증분 주문당 비용</th><th>분기 최대 증분 주문</th><th>사용</th><th>누적 비용</th><th>근거</th></tr></thead><tbody>{rec_rows}</tbody></table></div>
+<p class="note">캠페인 수단은 실험 범위(할인 10%)까지만, 첫 주문 쿠폰은 시험 때 꺼져 있던 주를 모두 켜는 경우, 첫 주문 쿠폰 1건의 증분 주문은 첫 주문 + 8주 안 재주문(최소 1회)으로 계산했습니다.</p></section>
 
 <section><h2>참값 대조</h2>
 <p class="note">시뮬레이션 데이터라 모든 추정치를 생성에 쓴 참값과 비교할 수 있습니다. 분석 코드는 data/raw만 읽고, 참값(data/truth)은 이 표에서만 씁니다.</p>
@@ -295,7 +316,7 @@ img{{width:100%}}.two{{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
 <div class="grid">{tl}</div>
 <h2>경영진 메모: 쿠폰은 '쓰인 건수'가 아니라 '늘어난 주문'으로 배분한다</h2>
 <div class="memo"><ol>
-<li>재주문 쿠폰은 전 고객 확대 대신 휴면 고객에게만(증분 주문당 {c2['breakpoints']['휴면(60일+)']:,.0f}원). 월 1회 이하({c2['breakpoints']['월 1회 이하']:,.0f}원)는 증분 주문 가치가 그 이상일 때만.</li>
+<li>재주문 쿠폰은 전 고객 확대 대신 휴면 고객에게만(증분 주문당 {c2['breakpoints']['휴면(60일+)']:,.0f}원). 월 1회 이하({c2['breakpoints']['월 1회 이하']:,.0f}원)는 증분 주문 가치가 그 이상일 때만. 두 권고를 합치면 지금보다 분기 주문 {c6['base']['vs_today']['orders']:+,.0f}건.</li>
 <li>캠페인 예산을 {top.category}·{cats.iloc[1].category} 등 반응이 큰 카테고리로, 실험한 할인 범위 안에서: 같은 예산으로 캠페인 주문 {pc(ra['rel'], 1, True)}.</li>
 <li>첫 주문 쿠폰은 '다시 주문한 신규 고객당 비용'(약 {won(fo['cost_per_incr_retained'])})으로 관리.</li>
 <li>비용 분담 50% 매칭은 참여·주문을 늘렸지만 증분 주문당 {c4['cost_per_extra_order']:,.0f}원(가치 6,000원 이상일 때만 남음) → 30% 매칭 셀로 다시 시험 후 확대.</li>

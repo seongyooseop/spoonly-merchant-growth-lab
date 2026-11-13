@@ -324,6 +324,21 @@ def ch5(mw, elas):
     fc["tier"] = fc.merchant_id.map(t)
     at = d[d.week >= 40].assign(tier=lambda x: x.merchant_id.map(t)).groupby("tier").orders.sum()
     seg_err = (fc.groupby("tier").orders_hat.sum() / at - 1).dropna().to_dict()
+    # weeks 40-50 only (the year-end surge is a known miss), by tier
+    fc50 = fc[fc.week <= 50]
+    at50 = d[d.week.between(40, 50)].assign(tier=lambda x: x.merchant_id.map(t)).groupby("tier").orders.sum()
+    seg_err50 = (fc50.groupby("tier").orders_hat.sum() / at50 - 1).dropna().to_dict()
+    # baseline outlook for 2026 Q1 (weeks 53-65): trend fitted on weeks 38-50 so the year-end surge is not read as growth,
+    # 설 (week 59) at the holiday effect, no campaigns, current merchant discounts. Compared with Q4 regular weeks.
+    fq, _, _ = run(best, 50, range(53, 66))
+    fq.loc[fq.week == 59, "orders_hat"] *= np.exp(hol_effect)
+    fq["tier"] = fq.merchant_id.map(t).fillna("신규(등급 없음)")
+    reg = [41, 42, 43, 46, 47, 48, 49, 50]
+    base_wk = d[d.week.isin(reg)].assign(tier=lambda x: x.merchant_id.map(t).fillna("신규(등급 없음)")).groupby("tier").orders.sum() / len(reg)
+    q1_wk = fq[fq.week != 59].groupby("tier").orders_hat.sum() / 12
+    outlook = [{"tier": k, "q4_regular_weekly": float(base_wk.get(k, 0)), "q1_weekly": float(q1_wk.get(k, 0)),
+                "change": float(q1_wk.get(k, 0) / base_wk[k] - 1) if base_wk.get(k, 0) else None}
+               for k in ["핵심", "성장", "유지", "관리", "신규(등급 없음)"]]
     dump("ch5_forecast.json", {
         "weekly": weekly.to_dict("records"), "window_selection_q3_mape": sel, "window": best,
         "mape_bottom_up": mape(pred, act), "mape_naive": mape(naive, act),
@@ -331,7 +346,8 @@ def ch5(mw, elas):
         "mape_event_bu": mape(event.bottom_up, event.actual), "mape_event_naive": mape(event.naive, event.actual),
         "q4_error": float(pred.sum() / act.sum() - 1), "q4_error_naive": float(naive.sum() / act.sum() - 1),
         "q4_error_w40_50": float(pred.loc[40:50].sum() / act.loc[40:50].sum() - 1),
-        "holiday_effect": hol_effect, "tier_error": seg_err, "n_modelled": int(fc.merchant_id.nunique()),
+        "holiday_effect": hol_effect, "tier_error": seg_err, "tier_error_w40_50": seg_err50, "outlook_q1": outlook,
+        "n_modelled": int(fc.merchant_id.nunique()),
         "year_end_miss": float((weekly.bottom_up / weekly.actual - 1)[weekly.week >= 51].mean())})
 
 
@@ -364,9 +380,48 @@ def ch6(mw):
         out[-1]["total_value"] = sum(r["value_won"] for r in out[-1]["rows"])
         out[-1]["total_orders"] = sum(r["orders"] for r in out[-1]["rows"])
     base = [x for x in out if x["value"] == VALUE_PER_INCR_ORDER][0]
+    seg = {r["segment"]: r for r in c2["reorder"]}
+
+    def sc(x):
+        return x * 13 / 12 * scale
+
+    # baseline 2: today (coupon only in the test) -> roll out to the segments the rule keeps
+    for x in out:
+        kept = [seg[k] for k in x["segments"]]
+        o, c = sum(sc(r["incremental"]) for r in kept), sum(sc(r["cost"]) for r in kept)
+        x["vs_today"] = {"orders": o + ra["orders_delta"], "coupon_cost": c, "value_won": (o + ra["orders_delta"]) * x["value"] - c}
+    # order-recovery cost curve: if an order target requires the full-rollout order level, cheapest measured levers first
+    cats = {r["category"]: r for r in c3["categories"]}
+    camp = mw[mw.week.isin([44, 45])].groupby("category").agg(spend=("platform_disc_won", "sum"), gmv=("gmv_won", "sum"))
+    opts = []
+    for k in ["월 1회 이하", "월 2~3회"]:
+        r = seg[k]
+        opts.append({"lever": f"재주문 쿠폰을 {k} 고객에게도", "cost_per_order": r["cost_per_incr"], "orders": sc(r["incremental"]),
+                     "note": "홀드아웃 실험"})
+    for c in [x for x in cats if x not in c3["top"] + c3["bottom"]]:
+        rate = camp.spend[c] / camp.gmv[c]
+        extra = camp.gmv[c] * max(0.10 - rate, 0)
+        mid = (rate + 0.10) / 2
+        orders = extra * cats[c]["b"] / (cats[c]["aov"] * (1 + cats[c]["b"] * mid))
+        if extra > 0:
+            opts.append({"lever": f"{c} 캠페인 할인을 10%까지", "cost_per_order": extra / orders, "orders": orders, "note": "캠페인 셀, 분기 1회"})
+    fo = c2["first_order"]
+    new_q = fo["extra_per_area_week"] * 3 * 13 * 0.5            # the coupon was on half the weeks; switching it on for the rest
+    per_new = 1 + fo["reorder_marginal"]                         # first order + at least one reorder within 8 weeks
+    opts.append({"lever": "첫 주문 쿠폰을 모든 주에", "cost_per_order": fo["cost_per_incr_new"] / per_new, "orders": new_q * per_new,
+                 "note": "지역 스위치백"})
+    opts.sort(key=lambda r: r["cost_per_order"])
+    gap, cum_o, cum_c = -base["total_orders"], 0.0, 0.0
+    for r in opts:
+        take = min(r["orders"], max(gap - cum_o, 0))
+        r["used_orders"], r["cost"] = take, take * r["cost_per_order"]
+        cum_o += take; cum_c += r["cost"]
+        r["cum_orders"], r["cum_cost"] = cum_o, cum_c
+    recovery = {"gap": gap, "options": opts, "recovered": cum_o, "cost": cum_c,
+                "value_won": cum_o * VALUE_PER_INCR_ORDER - cum_c}
     dump("ch6_impact.json", {"q4": {"orders": q_orders, "gmv": q_gmv, "net": float(q4.platform_net_won.sum())}, "scale": float(scale),
                              "full_rollout": {"coupon_cost": full_cost, "incremental": full_incr, "cost_per_incr": full_cost / full_incr},
-                             "base": base, "sensitivity": out, "per_campaign": True})
+                             "base": base, "sensitivity": out, "recovery": recovery, "per_campaign": True})
 
 
 def main():
