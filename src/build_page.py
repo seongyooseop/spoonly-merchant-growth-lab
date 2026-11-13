@@ -113,7 +113,7 @@ CSS = """
 .eyebrow{font-size:12px;color:var(--muted);letter-spacing:.04em}.lede{color:var(--muted);max-width:70ch}.note{font-size:13px;color:var(--muted)}
 .badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px;color:var(--muted);margin:2px 4px 2px 0}
 section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-top:16px}
-.memo{border-left:4px solid var(--accent)}.memo ol{padding-left:20px;margin:6px 0}.memo li{margin:4px 0}
+.memo{border-left:4px solid var(--accent)}.tldr{background:var(--soft);border-radius:8px;padding:10px 14px;margin:8px 0 12px}.tldr ol{margin:4px 0 0}.memo ol{padding-left:20px;margin:6px 0}.memo li{margin:4px 0}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
 .tile{border:1px solid var(--line);border-radius:8px;padding:10px 12px}.tile b{display:block;font-size:22px;line-height:1.2}.tile span{font-size:12.5px;color:var(--muted)}
 .two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}@media(max-width:820px){.two{grid-template-columns:1fr}}
@@ -198,6 +198,11 @@ KPI 정의 → 매장 세분화 → 쿠폰 증분 실험 → 카테고리별 할
 
 <section class="memo"><div class="eyebrow">경영진 메모 · 2026 상반기 매장 성장 계획</div>
 <h2>쿠폰은 '쓰인 건수'가 아니라 '늘어난 주문'으로 배분하고, 매장 등급마다 분담 기준을 달리한다</h2>
+<div class="tldr"><b>세 줄 요약</b><ol>
+<li>쿠폰은 늘어난 주문 기준으로: 재주문 쿠폰을 휴면 고객에게만 보내고 캠페인 예산을 반응 큰 카테고리로 옮기면, 지금보다 분기 주문 {vt['orders']:+,.0f}건(쿠폰비 +{won(vt['coupon_cost'])}), 전 고객 확대안보다 쿠폰비 {won(-sum(r['coupon_cost'] for r in base['rows']))} 절감.</li>
+<li>가장 큰 기회는 쿠폰이 아니라 배달 시간: 36분 초과 {op['slow_n']:,}곳을 32분으로 줄이면 하반기 GMV 약 {won(op['gain_delivery_h2'])} 상당.</li>
+<li>비용 분담 50% 매칭은 참여·주문을 늘렸지만 증분 주문당 {c4['cost_per_extra_order']:,.0f}원이라, 비율을 낮춰 다시 시험한 뒤 넓힌다.</li>
+</ol></div>
 <p><b>측정된 두 권고(1·2번)는 지금보다 분기 주문을 {vt['orders']:+,.0f}건 늘리고, 재주문 쿠폰을 시험 방식 그대로 전 고객에 넓히는 안보다 쿠폰비를 {won(-sum(r['coupon_cost'] for r in base['rows']))} 줄입니다.</b>
 증분 주문 1건을 4,500원으로 치면 전 고객 확대안보다 분기 {won(base['total_value'])}의 가치가 있고, 이 가치를 3,000~7,500원 어느 값으로 잡아도 {won(sens_lo)}~{won(sens_hi)}으로 양수입니다. 달라지는 것은 쿠폰을 받을 고객 범위입니다.</p>
 <ol>{''.join(f'<li>{m}</li>' for m in memo)}</ol>
@@ -287,7 +292,7 @@ def summary(c0, c1, c2, c3, c4, c5, c6, val):
     cats = pd.DataFrame(c3["categories"]); top, bot = cats.iloc[0], cats.iloc[-1]; ra = c3["realloc"]; did = c4["did"]; lv, op = c1["levers"], c1["opportunity"]
     tiles = [
         ("쿠폰 사용 주문 중 실제 증분", pc(allr["incr_share"]), f"{allr['redemptions']:,}건 중 {allr['incremental']:,.0f}건 (홀드아웃 대비)"),
-        ("두 권고의 분기 효과", won(c6["base"]["total_value"]), f"전 고객 확대안 대비 · 증분 주문 가치 3,000~7,500원이면 {won(min(x['total_value'] for x in c6['sensitivity'])).replace(' 원', '')}~{won(max(x['total_value'] for x in c6['sensitivity']))}"),
+        ("두 권고의 분기 효과 (현재 대비)", f"주문 {c6['base']['vs_today']['orders']:+,.0f}건", f"쿠폰비 +{won(c6['base']['vs_today']['coupon_cost'])} · 전 고객 확대안 대비로는 쿠폰비 {won(-sum(r['coupon_cost'] for r in c6['base']['rows']))} 절감, 가치 +{won(c6['base']['total_value'])}"),
         ("카테고리별 쿠폰 효율", f"{top.orders_per_1m_won / bot.orders_per_1m_won:.1f}배", f"100만 원당 {top.category} {top.orders_per_1m_won:,.0f}건 vs {bot.category} {bot.orders_per_1m_won:,.0f}건"),
         ("같은 예산 재배분", pc(ra["rel"], 1, True), "캠페인 주문 · 실험 범위(할인 10%) 안에서만 이동"),
         ("행사 주 예측 오차", pc(c5["mape_event_bu"], 1), f"직전 13주 평균 {pc(c5['mape_event_naive'], 1)} · 40~50주 합계 {pc(c5['q4_error_w40_50'], 1, True)}"),
