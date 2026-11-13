@@ -1,0 +1,323 @@
+{
+ "reorder": [
+  {
+   "segment": "월 1회 이하",
+   "n_treated": 24201,
+   "n_holdout": 4381,
+   "orders_t": 1.3097392669724393,
+   "orders_h": 0.892490299018489,
+   "diff": 0.4172489679539503,
+   "ci": [
+    0.3869636740754032,
+    0.44753426183249734
+   ],
+   "p": 1.3455970551360899e-160,
+   "redemptions": 20428,
+   "incremental": 10097.84227345355,
+   "incr_share": 0.49431379838719164,
+   "cost": 61284000.0,
+   "cost_per_incr": 6069.019335062394
+  },
+  {
+   "segment": "월 2~3회",
+   "n_treated": 26022,
+   "n_holdout": 4504,
+   "orders_t": 2.929136884174929,
+   "orders_h": 2.753108348134991,
+   "diff": 0.17602853603993784,
+   "ci": [
+    0.12349959820750717,
+    0.22855747387236852
+   ],
+   "p": 5.095731503934464e-11,
+   "redemptions": 28653,
+   "incremental": 4580.614564831262,
+   "incr_share": 0.15986509492308876,
+   "cost": 85959000.0,
+   "cost_per_incr": 18765.82252957284
+  },
+  {
+   "segment": "주 1회 이상",
+   "n_treated": 12341,
+   "n_holdout": 2179,
+   "orders_t": 7.653998865570051,
+   "orders_h": 7.671867829279486,
+   "diff": -0.017868963709434915,
+   "ci": [
+    -0.13654227597510316,
+    0.10080434855623333
+   ],
+   "p": 0.7679002747937079,
+   "redemptions": 8232,
+   "incremental": -220.52088113813628,
+   "incr_share": -0.026788250867120538,
+   "cost": 24696000.0,
+   "cost_per_incr": null
+  },
+  {
+   "segment": "휴면(60일+)",
+   "n_treated": 13900,
+   "n_holdout": 2472,
+   "orders_t": 0.6918705035971223,
+   "orders_h": 0.2156148867313916,
+   "diff": 0.4762556168657307,
+   "ci": [
+    0.45416285335446704,
+    0.49834838037699436
+   ],
+   "p": 0.0,
+   "redemptions": 7834,
+   "incremental": 6619.953074433657,
+   "incr_share": 0.8450284751638572,
+   "cost": 23502000.0,
+   "cost_per_incr": 3550.1762226631217
+  },
+  {
+   "segment": "전체",
+   "n_treated": 76464,
+   "n_holdout": 13536,
+   "orders_t": 2.772468089558485,
+   "orders_h": 2.4793144208037825,
+   "diff": 0.2931536687547025,
+   "ci": [
+    0.24035918682263585,
+    0.34594815068676915
+   ],
+   "p": 1.3837137719835913e-27,
+   "redemptions": 65147,
+   "incremental": 22415.702127659573,
+   "incr_share": 0.3440788083512606,
+   "cost": 195441000.0,
+   "cost_per_incr": 8718.932776985737
+  }
+ ],
+ "value_per_incr_order": 4500,
+ "targeted": {
+  "segments": [
+   "휴면(60일+)"
+  ],
+  "cost": 23502000.0,
+  "incremental": 6619.953074433657,
+  "cost_all": 195441000.0,
+  "incr_all": 21077.889031580333,
+  "cost_cut": 0.8797488756197522,
+  "incr_kept": 0.31407097098363085,
+  "option2": {
+   "segments": [
+    "휴면(60일+)",
+    "월 1회 이하"
+   ],
+   "cost_cut": 0.5661810981319171,
+   "incr_kept": 0.7931437215007379,
+   "cost_per_incr": 5071.601741476949
+  }
+ },
+ "first_order": {
+  "extra_per_area_week": 473.49999999999807,
+  "ci": [
+   425.12487093049754,
+   521.8751290694986
+  ],
+  "base_per_area_week": 1534.5833333333333,
+  "lift": 0.30855281020906744,
+  "reorder_organic": 0.3766494705403204,
+  "reorder_marginal": 0.2248269993997168,
+  "coupon_users_share_on": 0.5507318489032632,
+  "cost_per_incr_new": 11687.78599084834,
+  "cost_per_incr_retained": 51985.686870591504
+ },
+ "area_weeks": [
+  {
+   "area": "E",
+   "week": 40,
+   "coupon_on": 1,
+   "new_customers": 2604,
+   "coupon_users": 1457.0,
+   "reorder_8w": 0.33755760368663595
+  },
+  {
+   "area": "E",
+   "week": 41,
+   "coupon_on": 1,
+   "new_customers": 2484,
+   "coupon_users": 1349.0,
+   "reorder_8w": 0.3615136876006441
+  },
+  {
+   "area": "E",
+   "week": 42,
+   "coupon_on": 0,
+   "new_customers": 1821,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.36957715540911584
+  },
+  {
+   "area": "E",
+   "week": 43,
+   "coupon_on": 0,
+   "new_customers": 1821,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.3893465129049973
+  },
+  {
+   "area": "E",
+   "week": 44,
+   "coupon_on": 1,
+   "new_customers": 2334,
+   "coupon_users": 1266.0,
+   "reorder_8w": 0.3346186803770351
+  },
+  {
+   "area": "E",
+   "week": 45,
+   "coupon_on": 1,
+   "new_customers": 2460,
+   "coupon_users": 1364.0,
+   "reorder_8w": 0.33699186991869917
+  },
+  {
+   "area": "E",
+   "week": 46,
+   "coupon_on": 0,
+   "new_customers": 1809,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.3841901603095633
+  },
+  {
+   "area": "E",
+   "week": 47,
+   "coupon_on": 0,
+   "new_customers": 1788,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.3931767337807606
+  },
+  {
+   "area": "S",
+   "week": 40,
+   "coupon_on": 1,
+   "new_customers": 1641,
+   "coupon_users": 892.0,
+   "reorder_8w": 0.33150517976843386
+  },
+  {
+   "area": "S",
+   "week": 41,
+   "coupon_on": 1,
+   "new_customers": 1534,
+   "coupon_users": 847.0,
+   "reorder_8w": 0.3350717079530639
+  },
+  {
+   "area": "S",
+   "week": 42,
+   "coupon_on": 0,
+   "new_customers": 1192,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.34731543624161076
+  },
+  {
+   "area": "S",
+   "week": 43,
+   "coupon_on": 0,
+   "new_customers": 1142,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.38791593695271454
+  },
+  {
+   "area": "S",
+   "week": 44,
+   "coupon_on": 0,
+   "new_customers": 1082,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.3659889094269871
+  },
+  {
+   "area": "S",
+   "week": 45,
+   "coupon_on": 0,
+   "new_customers": 1118,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.37298747763864043
+  },
+  {
+   "area": "S",
+   "week": 46,
+   "coupon_on": 1,
+   "new_customers": 1428,
+   "coupon_users": 817.0,
+   "reorder_8w": 0.33403361344537813
+  },
+  {
+   "area": "S",
+   "week": 47,
+   "coupon_on": 1,
+   "new_customers": 1492,
+   "coupon_users": 778.0,
+   "reorder_8w": 0.3532171581769437
+  },
+  {
+   "area": "W",
+   "week": 40,
+   "coupon_on": 0,
+   "new_customers": 1797,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.3861992209237618
+  },
+  {
+   "area": "W",
+   "week": 41,
+   "coupon_on": 0,
+   "new_customers": 1648,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.3774271844660194
+  },
+  {
+   "area": "W",
+   "week": 42,
+   "coupon_on": 1,
+   "new_customers": 2085,
+   "coupon_users": 1132.0,
+   "reorder_8w": 0.3342925659472422
+  },
+  {
+   "area": "W",
+   "week": 43,
+   "coupon_on": 1,
+   "new_customers": 2037,
+   "coupon_users": 1157.0,
+   "reorder_8w": 0.33676975945017185
+  },
+  {
+   "area": "W",
+   "week": 44,
+   "coupon_on": 0,
+   "new_customers": 1635,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.3657492354740061
+  },
+  {
+   "area": "W",
+   "week": 45,
+   "coupon_on": 0,
+   "new_customers": 1562,
+   "coupon_users": 0.0,
+   "reorder_8w": 0.36619718309859156
+  },
+  {
+   "area": "W",
+   "week": 46,
+   "coupon_on": 1,
+   "new_customers": 1989,
+   "coupon_users": 1073.0,
+   "reorder_8w": 0.3378582202111614
+  },
+  {
+   "area": "W",
+   "week": 47,
+   "coupon_on": 1,
+   "new_customers": 2029,
+   "coupon_users": 1150.0,
+   "reorder_8w": 0.3533760473139478
+  }
+ ]
+}

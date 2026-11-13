@@ -1,0 +1,84 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPOONLY 매장 성장 분석</title><style>
+:root{--surface:#fcfcfb;--panel:#ffffff;--ink:#0b0b0b;--muted:#52514e;--line:#e4e3df;--accent:#2a78d6;--soft:#eef4fc}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--surface:#1a1a19;--panel:#222220;--ink:#f0efec;--muted:#c3c2b7;--line:#3a3936;--accent:#3987e5;--soft:#1f2a38}}
+:root[data-theme="dark"]{--surface:#1a1a19;--panel:#222220;--ink:#f0efec;--muted:#c3c2b7;--line:#3a3936;--accent:#3987e5;--soft:#1f2a38}
+*{box-sizing:border-box}body{margin:0;background:var(--surface);color:var(--ink);font-family:"Pretendard","Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;line-height:1.6;font-size:15px}
+.wrap{max-width:980px;margin:0 auto;padding:28px 16px 56px}h1{font-size:28px;margin:4px 0 6px;line-height:1.3}h2{font-size:20px;margin:0 0 6px}h3{font-size:15px;margin:14px 0 4px}
+.eyebrow{font-size:12px;color:var(--muted);letter-spacing:.04em}.lede{color:var(--muted);max-width:70ch}.note{font-size:13px;color:var(--muted)}
+.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 10px;font-size:12px;color:var(--muted);margin:2px 4px 2px 0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-top:16px}
+.memo{border-left:4px solid var(--accent)}.memo ol{padding-left:20px;margin:6px 0}.memo li{margin:4px 0}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:10px}
+.tile{border:1px solid var(--line);border-radius:8px;padding:10px 12px}.tile b{display:block;font-size:22px;line-height:1.2}.tile span{font-size:12.5px;color:var(--muted)}
+.two{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}@media(max-width:820px){.two{grid-template-columns:1fr}}
+img{max-width:100%;height:auto;display:block;border-radius:6px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;margin-top:6px}th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}th{color:var(--muted);font-weight:600;font-size:12.5px}td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbl{overflow-x:auto}a{color:var(--accent)}footer{margin-top:22px;font-size:12.5px;color:var(--muted)}
+</style></head><body><div class="wrap">
+<div class="eyebrow">SPOONLY · 가상의 배달앱 · 서울 동부·서울 서부·경기 남부 · 2025년 52주</div>
+<h1>입점 매장 성장 분석: 할인·쿠폰의 실제 효과를 가르고, 예산·분담 기준·분기 예측까지</h1>
+<p class="lede">가상의 배달앱 SPOONLY의 매장 2,400곳·주문 8,197,268건(GMV 1,411.6억 원)을 시뮬레이션해, 사업전략·비즈니스 분석 담당자가 하는 일을 처음부터 끝까지 보여주는 포트폴리오입니다.
+KPI 정의 → 매장 세분화 → 쿠폰 증분 실험 → 카테고리별 할인 반응 → 비용 분담 시범 평가 → 분기 매출 예측 → 경영진 메모 순서입니다. 데이터에 함정 다섯 가지를 넣어 두었고, 모든 추정치를 참값과 대조했습니다(17개 중 17개 통과).</p>
+<span class="badge">모든 데이터는 가상</span><span class="badge">실제 회사·고객 정보 없음</span><span class="badge">SQL(DuckDB) · Python(statsmodels)</span>
+<span class="badge"><a href="https://github.com/seongyooseop/spoonly-merchant-growth-lab">코드 저장소</a></span>
+
+<section class="memo"><div class="eyebrow">경영진 메모 · 2026 상반기 매장 성장 계획</div>
+<h2>쿠폰은 '쓰인 건수'가 아니라 '늘어난 주문'으로 배분하고, 매장 등급마다 분담 기준을 달리한다</h2>
+<ol><li><b>재주문 쿠폰은 휴면·월 1회 이하 고객에게만 보낸다.</b> 쿠폰 사용 주문 65,147건 중 실제로 늘어난 주문은 22,416건(34%)이었다. 두 고객군으로 좁히면 쿠폰비 57% 절감, 증분 주문 79% 유지(증분 주문당 5,072원).</li><li><b>플랫폼 캠페인 예산을 할인 반응이 큰 카테고리로 옮긴다.</b> 쿠폰 100만 원당 주문은 카페·디저트 335건, 일식 68건으로 약 4.9배 차이. 하위 3개 카테고리 예산의 절반을 상위 2개로 옮기면 같은 예산으로 캠페인 주문 +6.0%.</li><li><b>첫 주문 쿠폰은 '8주 안에 다시 주문한 신규 고객당 비용'으로 관리한다.</b> 쿠폰이 신규 고객을 31% 늘렸지만, 쿠폰으로 늘어난 고객의 8주 재주문율은 22%(자연 유입 38%). 재주문 고객 1명당 약 5.2만 원.</li><li><b>비용 분담 매칭은 비율을 낮춰 다시 시험한 뒤 넓힌다.</b> 서울 서부 성장 등급 매장에서 할인 참여 +6.6%p, 주문 +7.7%였지만 늘어난 주문 1건당 플랫폼 비용이 5,888원으로 기준(4,500원)보다 높다.</li><li><b>쿠폰보다 큰 기회는 배달 시간이다.</b> 배달 36분 초과 매장 791곳을 32분으로 줄이면 하반기 GMV 기준 약 32.7억 원에 해당하는 주문이 늘어난다(1분당 주문 −1.5%).</li></ol>
+<p class="note">증분 주문 1건의 플랫폼 가치는 4,500원으로 가정(수수료 약 1,700원 + 이후 재주문 가치). 이 값이 바뀌면 1·4번 결론의 기준선이 함께 움직입니다.</p></section>
+
+<section><h2>0. KPI 트리: 무엇이 GMV와 플랫폼 수익을 움직이나</h2>
+<p>GMV = 주문 수 × 객단가, 주문 = 신규 + 재주문, 플랫폼 순수익 = GMV × 수수료 10% − 플랫폼 부담 할인. 캠페인 주에는 주문이 늘지만 주문당 순수익이 크게 줄어, '주문 수'만 보면 쿠폰이 늘 좋아 보입니다.</p>
+<div class="tiles">
+<div class="tile"><b>1,411.6억 원</b><span>연간 GMV · 주문 8.2백만 건 · 객단가 17,220원</span></div>
+<div class="tile"><b>57%</b><span>재주문 비중 (주문 기준)</span></div>
+<div class="tile"><b>+15%</b><span>캠페인 주 주문 (앞뒤 2주 대비)</span></div>
+<div class="tile"><b>730원</b><span>캠페인 주 주문당 플랫폼 순수익 (평소 1,714원)</span></div>
+</div></section>
+
+<section><h2>1. 매장 세분화와 성장 레버</h2>
+<p>상반기 주문 수준(중앙값 기준)과 성장 잠재력(평점 4.4 이상·배달 36분 이내)으로 2,265곳을 네 등급으로 나눴습니다. 가입 1주차 매장 1,964곳의 횡단면 회귀(카테고리·지역·객단가 통제)로 레버 크기를 쟀습니다:
+평점 0.1점당 주문 +4.2% [3.2%, 5.3%], 배달 1분 지연당 −1.5% [−2.1%, −0.9%].</p>
+<div class="tbl"><table><thead><tr><th>등급</th><th>매장</th><th>하반기 GMV 비중</th><th>주간 주문</th><th>재주문 비중</th><th>평균 배달</th><th>운영 방향</th></tr></thead><tbody><tr><td><b>핵심</b><br><span class='note'>주문 상위 · 평점 4.4+ · 배달 36분 이내</span></td><td class='n'>543</td><td class='n'>36%</td><td class='n'>104</td><td class='n'>60%</td><td class='n'>30.4분</td><td>매장 부담 할인 + 행사 노출, 플랫폼 보조는 캠페인만</td></tr><tr><td><b>성장</b><br><span class='note'>주문 하위 · 평점 4.4+ · 배달 36분 이내</span></td><td class='n'>433</td><td class='n'>11%</td><td class='n'>37</td><td class='n'>60%</td><td class='n'>30.6분</td><td>플랫폼 매칭(조건부) + 노출 지원</td></tr><tr><td><b>유지</b><br><span class='note'>주문 상위 · 평점 또는 배달 기준 미달</span></td><td class='n'>592</td><td class='n'>37%</td><td class='n'>95</td><td class='n'>56%</td><td class='n'>36.3분</td><td>배달 시간·평점 개선을 먼저, 보조는 축소</td></tr><tr><td><b>관리</b><br><span class='note'>주문 하위 · 평점 또는 배달 기준 미달</span></td><td class='n'>697</td><td class='n'>16%</td><td class='n'>35</td><td class='n'>56%</td><td class='n'>36.8분</td><td>운영 지표 개선 목표를 걸고 보조 없음</td></tr></tbody></table></div>
+<p class="note">성장 기회: 배달 36분 초과 791곳을 32분으로 → 하반기 GMV 약 32.7억 원 상당 / 평점 4.3 미만 462곳을 4.3으로 → 약 11.6억 원 상당.</p></section>
+
+<section><h2>2. 쿠폰 증분: 기존 고객 활성화와 신규 고객 획득</h2>
+<div class="two"><div>
+<h3>재주문 쿠폰(3,000원) 고객 홀드아웃 · 27~38주차</h3>
+<p>고객 90,000명 중 15%를 무작위로 빼고, 나머지에게 마지막 주문 후 3주가 지나면 쿠폰을 보냈습니다. 쿠폰이 쓰인 주문을 모두 효과로 치면 65,147건이지만, 홀드아웃과 비교한 실제 증분은 22,416건입니다. 주 1회 이상 주문 고객에게는 효과가 0과 구분되지 않습니다.</p>
+</div><div><img src="img/ch2_cost_per_incremental.png" alt="고객군별 증분 주문 1건당 쿠폰 비용"></div></div>
+<div class="tbl"><table><thead><tr><th>고객군</th><th>고객당 주문 차이(12주)</th><th>쿠폰 사용 주문</th><th>증분 주문</th><th>증분 비중</th><th>증분 주문당 비용</th></tr></thead><tbody><tr><td>주 1회 이상</td><td class='n'>-0.018</td><td class='n'>8,232</td><td class='n'>-221</td><td class='n'>0%</td><td class='n'>증분 없음</td></tr><tr><td>월 2~3회</td><td class='n'>+0.176</td><td class='n'>28,653</td><td class='n'>4,581</td><td class='n'>16%</td><td class='n'>18,766원</td></tr><tr><td>월 1회 이하</td><td class='n'>+0.417</td><td class='n'>20,428</td><td class='n'>10,098</td><td class='n'>49%</td><td class='n'>6,069원</td></tr><tr><td>휴면(60일+)</td><td class='n'>+0.476</td><td class='n'>7,834</td><td class='n'>6,620</td><td class='n'>85%</td><td class='n'>3,550원</td></tr><tr><td>전체</td><td class='n'>+0.293</td><td class='n'>65,147</td><td class='n'>22,416</td><td class='n'>34%</td><td class='n'>8,719원</td></tr></tbody></table></div>
+<h3>첫 주문 쿠폰(5,000원) 지역 스위치백 · 40~47주차</h3>
+<p>세 지역에서 2주 단위로 쿠폰을 켜고 껐습니다(지역·주 고정효과). 쿠폰이 켜진 주에 신규 고객이 지역·주당 473명(+31%) 늘었습니다. 다만 쿠폰으로 늘어난 고객의 8주 재주문율은 22%로 자연 유입(38%)보다 낮아,
+신규 고객 1명당 1.2만 원, 다시 주문한 신규 고객 1명당 5.2만 원이 듭니다.</p></section>
+
+<section><h2>3. 카테고리별 할인 반응과 캠페인 예산</h2>
+<div class="two"><div>
+<p>매장이 스스로 건 할인으로 효과를 재면 반응이 작게 나옵니다. 매장은 주문이 줄어든 주에 할인을 올리기 때문입니다(함정 1). 그래서 지역×카테고리 단위로 무작위 배정된 플랫폼 캠페인 쿠폰(0·5·10%)만으로 반응을 추정했습니다(매장·지역×주 고정효과).</p>
+<p>같은 1원이라도 카페·디저트는 일식보다 약 4.9배 많은 주문을 만듭니다. 44~45주차 캠페인 예산 중 하위 3개 카테고리 몫의 절반(1.1억 원)을 상위 2개로 옮기면 같은 예산으로 주문 23,702건(+6.0%)이 늘어납니다.</p>
+</div><div><img src="img/ch3_orders_per_won.png" alt="카테고리별 쿠폰 100만 원당 증분 주문"></div></div>
+<div class="tbl"><table><thead><tr><th>카테고리</th><th>매장 자체 할인으로 잰 반응</th><th>캠페인 쿠폰으로 잰 반응 [95%]</th><th>객단가</th><th>100만 원당 주문</th></tr></thead><tbody><tr><td>카페·디저트</td><td class='n'>2.73</td><td class='n'>4.09 [3.82, 4.36]</td><td class='n'>9,668원</td><td class='n'>335건</td></tr><tr><td>분식</td><td class='n'>2.80</td><td class='n'>3.70 [3.44, 3.96]</td><td class='n'>11,089원</td><td class='n'>271건</td></tr><tr><td>한식</td><td class='n'>1.23</td><td class='n'>2.69 [2.42, 2.96]</td><td class='n'>14,113원</td><td class='n'>162건</td></tr><tr><td>중식</td><td class='n'>1.06</td><td class='n'>2.64 [2.42, 2.86]</td><td class='n'>16,189원</td><td class='n'>142건</td></tr><tr><td>치킨</td><td class='n'>0.74</td><td class='n'>2.18 [1.98, 2.37]</td><td class='n'>24,334원</td><td class='n'>79건</td></tr><tr><td>피자</td><td class='n'>0.96</td><td class='n'>2.35 [2.00, 2.70]</td><td class='n'>26,589원</td><td class='n'>78건</td></tr><tr><td>일식</td><td class='n'>-0.19</td><td class='n'>1.60 [1.23, 1.98]</td><td class='n'>21,355원</td><td class='n'>68건</td></tr></tbody></table></div>
+<p class="note">반응 = 할인율 1당 로그 주문 변화(할인 10%p → 주문 약 e^(0.1×반응)배). 서울 서부 30주차 이후(비용 분담 시범)는 추정에서 뺐습니다.</p></section>
+
+<section><h2>4. 비용 분담 시범: 플랫폼이 매장 할인을 50% 매칭하면</h2>
+<div class="two"><div>
+<p>서울 서부 성장 등급 매장(156곳)에 30주차부터 매장 할인의 50%(최대 5%p)를 플랫폼이 부담했습니다. 다른 지역 성장 등급 매장과의 이중차분(매장·주 고정효과, 매장 단위 군집 표준오차):
+할인 참여 +6.6%p [1.3, 11.9], 주문 +7.7% [4.2%, 11.2%].</p>
+<p>참여는 시작 후 8~12주에 걸쳐 늘었고, 시작 전에는 두 집단의 차이가 0 근처였습니다. 하지만 늘어난 주문 약 9,774건에 플랫폼 할인 5,755만 원이 들어, 증분 주문 1건당 5,888원입니다. 매칭 30% 셀을 추가해 비용 곡선을 확인한 뒤 확대를 권합니다.</p>
+</div><div><img src="img/ch4_event_study.png" alt="비용 분담 시범 전후 할인 참여 차이"></div></div></section>
+
+<section><h2>5. 분기 매출 예측과 시뮬레이션</h2>
+<div class="two"><div>
+<p>매장별로 할인을 걷어낸 수요의 추세를 잡고, 명절 효과와 이미 정해진 캠페인 일정 × 카테고리 반응을 더해 주 단위로 합산했습니다. 추세 기간은 Q3 백테스트에서 고른 13주를 Q4에 그대로 적용했습니다(시험 기간을 보고 고르지 않음).</p>
+<p>평소 주 오차는 1.2%(직전 13주 평균 1.4%)로 비슷하지만, 추석·캠페인 주 오차는 1.0%로 단순 평균(10.9%)보다 훨씬 작습니다. 40~50주 합계 오차는 −0.7%.
+연말 급증은 학습 기간에 없던 패턴이라 −19% 놓쳤습니다(함정 5). 작년 데이터가 쌓이면 연간 계절성을 넣어야 합니다.</p>
+</div><div><img src="img/ch5_forecast.png" alt="Q4 주간 주문 실제와 예측"></div></div></section>
+
+<section><h2>참값 대조</h2>
+<p class="note">시뮬레이션 데이터라 모든 추정치를 생성에 쓴 참값과 비교할 수 있습니다. 분석 코드는 data/raw만 읽고, 참값(data/truth)은 이 표에서만 씁니다.</p>
+<div class="tbl"><table><thead><tr><th>점검</th><th>추정</th><th>참값</th><th>결과</th></tr></thead><tbody><tr><td>평점 0.1점당 주문 효과</td><td class='n'>0.042</td><td class='n'>0.041</td><td>통과</td></tr><tr><td>배달 1분 지연당 주문 효과</td><td class='n'>-0.015</td><td class='n'>-0.015</td><td>통과</td></tr><tr><td>재주문 쿠폰: 증분 주문당 비용 순위(휴면 최저)</td><td class='n'>휴면(60일+)</td><td class='n'>휴면(60일+)</td><td>통과</td></tr><tr><td>재주문 쿠폰: 주 1회 이상 고객 효과 0과 구분 안 됨</td><td class='n'>-0.018</td><td class='n'>0.0</td><td>통과</td></tr><tr><td>첫 주문 쿠폰: 신규 고객 증가율</td><td class='n'>0.309</td><td class='n'>0.32</td><td>통과</td></tr><tr><td>첫 주문 쿠폰: 쿠폰으로 늘어난 고객 8주 재주문율</td><td class='n'>0.225</td><td class='n'>0.22</td><td>통과</td></tr><tr><td>할인 반응(캠페인 기준) 카페·디저트</td><td class='n'>4.09</td><td class='n'>3.864</td><td>통과</td></tr><tr><td>할인 반응(캠페인 기준) 분식</td><td class='n'>3.699</td><td class='n'>4.262</td><td>통과</td></tr><tr><td>할인 반응(캠페인 기준) 한식</td><td class='n'>2.692</td><td class='n'>2.646</td><td>통과</td></tr><tr><td>할인 반응(캠페인 기준) 중식</td><td class='n'>2.642</td><td class='n'>2.471</td><td>통과</td></tr><tr><td>할인 반응(캠페인 기준) 치킨</td><td class='n'>2.176</td><td class='n'>2.243</td><td>통과</td></tr><tr><td>할인 반응(캠페인 기준) 피자</td><td class='n'>2.35</td><td class='n'>2.071</td><td>통과</td></tr><tr><td>할인 반응(캠페인 기준) 일식</td><td class='n'>1.605</td><td class='n'>1.359</td><td>통과</td></tr><tr><td>매장 자체 할인으로 잰 반응이 더 틀림(함정 1)</td><td class='n'>7.0</td><td class='n'>7</td><td>통과</td></tr><tr><td>비용 분담 시범: 주문 효과(DiD)</td><td class='n'>0.077</td><td class='n'>0.064</td><td>통과</td></tr><tr><td>예측: 행사 주 오차가 단순 평균보다 작음</td><td class='n'>0.01</td><td class='n'>0.109</td><td>통과</td></tr><tr><td>예측: 연말 급증은 놓침(함정 5, 예상된 실패)</td><td class='n'>-0.194</td><td class='n'>-0.18</td><td>통과</td></tr></tbody></table></div></section>
+
+<footer>가상 데이터·가상 브랜드로 만든 포트폴리오입니다. 실제 회사의 데이터·화면·수치와 무관합니다. 파이프라인: Python 시뮬레이션 → DuckDB SQL 마트 → statsmodels(고정효과 회귀·이중차분·사건 연구) → 검증 → 이 페이지.
+작성: 성유섭 · <a href="https://github.com/seongyooseop/spoonly-merchant-growth-lab">https://github.com/seongyooseop/spoonly-merchant-growth-lab</a></footer>
+</div></body></html>

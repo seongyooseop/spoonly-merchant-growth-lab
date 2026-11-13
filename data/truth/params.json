@@ -1,0 +1,58 @@
+{
+ "categories": {
+  "치킨": {
+   "b": 2.2
+  },
+  "한식": {
+   "b": 2.6
+  },
+  "분식": {
+   "b": 4.2
+  },
+  "카페·디저트": {
+   "b": 3.8
+  },
+  "중식": {
+   "b": 2.4
+  },
+  "피자": {
+   "b": 2.0
+  },
+  "일식": {
+   "b": 1.3
+  }
+ },
+ "lever_rating_per_0p1": 0.04,
+ "lever_delivery_per_min_over_32": -0.015,
+ "take_rate": 0.1,
+ "pilot": {
+  "area": "W",
+  "week": 30,
+  "match": 0.5,
+  "start_prob_per_week": 0.05
+ },
+ "year_end": {
+  "51": 0.18,
+  "52": 0.22
+ },
+ "holiday": {
+  "4": 0.12,
+  "40": 0.12
+ },
+ "reorder_test": {
+  "lift_per_eligible_week": {
+   "주 1회 이상": 0.01,
+   "월 2~3회": 0.035,
+   "월 1회 이하": 0.055,
+   "휴면(60일+)": 0.045
+  },
+  "coupon_won": 3000,
+  "holdout_share": 0.15
+ },
+ "first_order_test": {
+  "extra_new_share": 0.32,
+  "repeat_organic": 0.38,
+  "repeat_marginal": 0.22,
+  "coupon_won": 5000
+ }
+}
