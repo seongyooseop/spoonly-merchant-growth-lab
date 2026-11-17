@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT, SITE, IMG = ROOT / "outputs", ROOT / "site", ROOT / "site" / "img"
 REPO = "https://github.com/seongyooseop/spoonly-merchant-growth-lab"
 DEMO = "https://seongyooseop.github.io/spoonly-merchant-growth-lab/site/"
-COPY_TO = ROOT.parent / "성유섭_포트폴리오요약_쿠팡이츠_사업전략비즈니스분석.pdf"
+COPY_TO = ROOT.parent / "성유섭_포트폴리오요약_SPOONLY.pdf"
 BROWSERS = [r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
             r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
             r"C:\Program Files\Google\Chrome\Application\chrome.exe"]
